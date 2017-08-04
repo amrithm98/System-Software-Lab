@@ -9,8 +9,10 @@ void add_proc_to_queue(int);
 void display_ready_queue(int n);
 void sort_ready_queue(int n,int by);//Sort By Burst or Priority
 void swap(int *x,int *y);
+void copy_queue(int ready_queue[][5],int n);
 
 int ready_queue[20][5];
+int input_queue[20][5];
 //PID BURST WAIT Priority RemainingTime
 
 int main()
@@ -23,7 +25,7 @@ int main()
     add_proc_to_queue(n);
 
     while(1){
-
+        copy_queue(ready_queue,n);
         printf("\nPress 1 To Implement SJF Scheduling");
         printf("\nPress 2 To Implement FCFS Scheduling");
         printf("\nPress 3 To Implement Priority Scheduling");
@@ -31,6 +33,7 @@ int main()
         printf("\nPress 5 To Exit");
         printf("\nEnter Your Choice: ");
         scanf("%d",&ch);
+
         switch(ch)
         {
     
@@ -51,6 +54,18 @@ int main()
                 break;
             default:
                 break;
+        }
+    }
+}
+
+void copy_queue(int ready_queue[][5],int n)
+{
+    int i,j;
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<5;j++)
+        {
+            ready_queue[i][j]=input_queue[i][j];
         }
     }
 }
@@ -98,30 +113,39 @@ void priority_scheduling(int n)
 
 void round_robin_scheduling(int n)
 {
-    int quantum,remain=n,tim,count,flag;
+    int quantum,remain=n,tim=0,count,flag=1,i;
     printf("\nEnter Time Quantum for RR: ");
-    scanf("%d",quantum);
-    printf("PID\tBurst-Time\tPriority\tWaiting-Time\tTurn-Around-Time\n");
-    printf("----\t------------\t---------\t-------------\t---------------\n");
-    for(tim=0,count=0;remain!=0;)
-    {
-        if(ready_queue[count][4]<=quantum && ready_queue[count][4]>0)
+    scanf("%d",&quantum);
+    printf("\nRound Robin SCHEDULING : \n---------------------\n");
+
+    while(1){
+
+        flag=1;
+
+        for(i=0;i<n;i++)
         {
-            tim+=ready_queue[count][4];
-            ready_queue[count][4]=0;   
-            flag=1;
+            if(ready_queue[i][4]>0)
+            {
+                flag=0;
+                if(ready_queue[i][4]>quantum)
+                {
+                    tim+=quantum;
+                    ready_queue[i][4]-=quantum;
+                }
+                else
+                {
+                    tim+=ready_queue[i][4];
+                    ready_queue[i][2]=tim-ready_queue[i][1];
+                    ready_queue[i][4]=0;
+                }
+            }
         }
-        else if(ready_queue[count][4]>0){
-            ready_queue[count][4]-=quantum;
-            tim+=quantum;
-        }
-        if(ready_queue[count][4]==0 && flag==1)
+        if(flag)
         {
-            remain--;
-            printf("%d\t%d\t\t%d\t\t%d\t\t%d",ready_queue[count][0],ready_queue[count][1],ready_queue[count][3],ready_queue[count][2],ready_queue[count][1]+ready_queue[count][2]);
-            flag=0;
+            break;
         }
     }
+    display_ready_queue(n);
 
 }
 
@@ -130,13 +154,18 @@ void add_proc_to_queue(int n){
     for(i=0;i<n;i++)
     {       
             printf("Enter Process PID:");
-            scanf("%d",&ready_queue[i][0]);
+            scanf("%d",&input_queue[i][0]);
             printf("Enter Process Burst Time:");
-            scanf("%d",&ready_queue[i][1]);
+            scanf("%d",&input_queue[i][1]);
             printf("Enter Process Priority( 0 for No Special Priority ):");
-            scanf("%d",&ready_queue[i][3]);
-            ready_queue[i][4]=ready_queue[i][1]; //Initital Remaining Time= Burst Time
+            scanf("%d",&input_queue[i][3]);
     }
+    for(i=0;i<n;i++)
+    {
+        //Initital Remaining Time= Burst Time
+        input_queue[i][4]=input_queue[i][1];
+    }
+    copy_queue(ready_queue,n);
     printf("\nINPUT PROCESSES:\n");
     printf("---------------------\n");
     display_ready_queue(n);
@@ -157,16 +186,19 @@ void display_ready_queue(int n){
 void sort_ready_queue(int n,int by)
 {
     int i,j;
-    for(i=0;i<n;i++)
+    for(i=0;i<n-1;i++)
     {
-        for(j=0;j<n-i-1;j++)
+        for(j=0;j<n-1;j++)
         {
-            if(ready_queue[i][by]>ready_queue[i+1][by])
+            if(ready_queue[j][by]>ready_queue[j+1][by])
             {
-                swap(&ready_queue[i][0],&ready_queue[i+1][0]);
-                swap(&ready_queue[i][1],&ready_queue[i+1][1]);
-                swap(&ready_queue[i][2],&ready_queue[i+1][2]);
-                swap(&ready_queue[i][3],&ready_queue[i+1][3]);
+                printf("\nBefore %d\t%d",ready_queue[j][1],ready_queue[j+1][1]);
+                swap(&ready_queue[j][0],&ready_queue[j+1][0]);
+                swap(&ready_queue[j][1],&ready_queue[j+1][1]);
+                swap(&ready_queue[j][2],&ready_queue[j+1][2]);
+                swap(&ready_queue[j][3],&ready_queue[j+1][3]);
+                swap(&ready_queue[j][4],&ready_queue[j+1][4]);
+                printf("\nAfter %d\t%d",ready_queue[j][1],ready_queue[j+1][1]);
             }
         }
     }
