@@ -10,42 +10,48 @@ void display_ready_queue(int n);
 void sort_ready_queue(int n,int by);//Sort By Burst or Priority
 void swap(int *x,int *y);
 
-int ready_queue[20][4];
-//PID BURST WAIT Priority
+int ready_queue[20][5];
+//PID BURST WAIT Priority RemainingTime
 
 int main()
 {   
     int n,ch;
+
     printf("\nEnter Number of Processes: ");
     scanf("%d",&n);
+
     add_proc_to_queue(n);
-    printf("\nPress 1 To Implement SJF Scheduling");
-    printf("\nPress 2 To Implement FCFS Scheduling");
-    printf("\nPress 3 To Implement Priority Scheduling");
-    printf("\nPress 4 To Implement Round Robin Scheduling");
-    printf("\nPress 5 To Exit");
-    printf("\nEnter Your Choice: ");
-    scanf("%d",&ch);
-    switch(ch)
-    {
- 
-        case 1:
-            sjf_scheduling(n);
-            break;  
-        case 2:
-            fcfs_scheduling(n);
-            break;
-        case 3:
-            priority_scheduling(n);
-            break;
-        case 4:
-            round_robin_scheduling(n);
-            break;
-        case 5:
-            exit(0);
-            break;
-        default:
-            break;
+
+    while(1){
+
+        printf("\nPress 1 To Implement SJF Scheduling");
+        printf("\nPress 2 To Implement FCFS Scheduling");
+        printf("\nPress 3 To Implement Priority Scheduling");
+        printf("\nPress 4 To Implement Round Robin Scheduling");
+        printf("\nPress 5 To Exit");
+        printf("\nEnter Your Choice: ");
+        scanf("%d",&ch);
+        switch(ch)
+        {
+    
+            case 1:
+                sjf_scheduling(n);
+                break;  
+            case 2:
+                fcfs_scheduling(n);
+                break;
+            case 3:
+                priority_scheduling(n);
+                break;
+            case 4:
+                round_robin_scheduling(n);
+                break;
+            case 5:
+                exit(0);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -92,6 +98,30 @@ void priority_scheduling(int n)
 
 void round_robin_scheduling(int n)
 {
+    int quantum,remain=n,tim,count,flag;
+    printf("\nEnter Time Quantum for RR: ");
+    scanf("%d",quantum);
+    printf("PID\tBurst-Time\tPriority\tWaiting-Time\tTurn-Around-Time\n");
+    printf("----\t------------\t---------\t-------------\t---------------\n");
+    for(tim=0,count=0;remain!=0;)
+    {
+        if(ready_queue[count][4]<=quantum && ready_queue[count][4]>0)
+        {
+            tim+=ready_queue[count][4];
+            ready_queue[count][4]=0;   
+            flag=1;
+        }
+        else if(ready_queue[count][4]>0){
+            ready_queue[count][4]-=quantum;
+            tim+=quantum;
+        }
+        if(ready_queue[count][4]==0 && flag==1)
+        {
+            remain--;
+            printf("%d\t%d\t\t%d\t\t%d\t\t%d",ready_queue[count][0],ready_queue[count][1],ready_queue[count][3],ready_queue[count][2],ready_queue[count][1]+ready_queue[count][2]);
+            flag=0;
+        }
+    }
 
 }
 
@@ -105,6 +135,7 @@ void add_proc_to_queue(int n){
             scanf("%d",&ready_queue[i][1]);
             printf("Enter Process Priority( 0 for No Special Priority ):");
             scanf("%d",&ready_queue[i][3]);
+            ready_queue[i][4]=ready_queue[i][1]; //Initital Remaining Time= Burst Time
     }
     printf("\nINPUT PROCESSES:\n");
     printf("---------------------\n");
