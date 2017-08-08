@@ -138,8 +138,20 @@ int main()
                 }
                 break;
             case 12:
+                printf("Enter File Name: ");
+                scanf("%s",fileName);
+                delete_file(&(directory->childDir),fileName);
                 break;
             case 13:
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    printf("Enter File Name: ");
+                    scanf("%s",fileName);
+                    delete_file(&(temp->childDir),fileName);
+                }
                 break;
             case 14:
                 exit(0);
