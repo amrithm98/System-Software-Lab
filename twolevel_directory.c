@@ -26,8 +26,12 @@ struct dir *search_directory(struct dir **next,char a[]);
 
 int main()
 {   
-    struct dir *directory,*temp;
-    directory=NULL;
+    struct dir *directory,*temp,*subDir;
+    directory=(struct dir *)malloc(sizeof(struct dir));
+    strcpy(directory->dirName,"root");
+    directory->nextDir=NULL;
+    directory->childDir=NULL;
+    directory->nextFile=NULL;
     int ch;
     char dirName[20],fileName[20];
     while(1)
@@ -40,7 +44,7 @@ int main()
         printf("\n Press 6 To Delete Directory in Root");
         printf("\n Press 7 To Delete a Sub Directory");
         printf("\n Press 8 To Create a file in Main Directories");
-        printf("\n Press 9 To Delete a file in a Sub Directory");
+        printf("\n Press 9 To Create a file in a Sub Directory");
         printf("\n Press 10 To Exit");
         printf("\n Enter Your Choice: ");
         scanf("%d",&ch);
@@ -52,8 +56,10 @@ int main()
             case 2:
                 printf("Enter Root Directory Name: ");
                 scanf("%s",dirName);
-                temp=search_directory(&directory,dirName);
-                add_file(&temp);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp==NULL)
+                    return;
+                add_directory(&temp);
                 break;
             case 3:
                 display_directory(&directory);
@@ -61,22 +67,43 @@ int main()
             case 4:
                 printf("Enter Directory Name: ");
                 scanf("%s",dirName);
-                temp=search_directory(&directory,dirName);
+                temp=search_directory(&(directory->childDir),dirName);
                 break;
             case 5:
-                printf("Enter File Name: ");
-                scanf("%s",fileName);
-                search_file(&directory,fileName);
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    printf("Enter Sub Directory Name: ");
+                    scanf("%s",dirName);
+                    subDir=search_directory(&(temp->childDir),dirName);
+                }
                 break;
             case 6:
-                printf("Enter Directory Name: ");
-                scanf("%s",dirName);
-                delete_directory(&directory,dirName);
                 break;
             case 7:
-                printf("Enter File Name: ");
-                scanf("%s",fileName);
-                delete_file(&directory,fileName);
+                break;
+            case 8:
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    add_file(&temp);
+                }
+                break;
+            case 9:
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    printf("Enter Sub Directory Name: ");
+                    scanf("%s",dirName);
+                    subDir=search_directory(&(temp->childDir),dirName);
+                    add_file(&subDir);
+                }
                 break;
             case 10:
                 exit(0);
@@ -268,7 +295,7 @@ void display_directory(struct dir **directory)
 {
     struct dir *temp;
     struct file *ftemp;
-    temp=(*directory);
+    temp=(*directory)->childDir;
     if(temp==NULL)
     {
         printf("\nRoot has No Directories\n");
@@ -280,13 +307,30 @@ void display_directory(struct dir **directory)
         while(temp!=NULL)
         {
             printf("\n%s",temp->dirName);
-            ftemp=temp->nextFile;
-            while(ftemp!=NULL)
+            struct dir *children;
+            children=temp->childDir;
+            while(children!=NULL)
             {
                 printf("\n  |");
-                printf("\n  --->%s",ftemp->fileName);
-                ftemp=ftemp->next;
+                printf("\n  --->%s(sub-dir)",children->dirName);
+                struct file * childFiles;
+                childFiles=children->nextFile;
+                while(childFiles!=NULL)
+                {
+                    printf("\n\t  |");
+                    printf("\n\t  --->%s(sub-dir-file)",childFiles->fileName);
+                    childFiles=childFiles->next;
+                }
+                ftemp=temp->nextFile;
+                while(ftemp!=NULL)
+                {
+                    printf("\n  |");
+                    printf("\n  --->%s(file)",ftemp->fileName);
+                    ftemp=ftemp->next;
+                }
+                children=children->nextDir;
             }
+            
             printf("\n");
             temp=temp->nextDir;
         }
@@ -304,7 +348,7 @@ void display_directory(struct dir **directory)
 void add_directory(struct dir **next)
 {
     struct dir *temp;
-    temp=(*next);
+    temp=(*next)->childDir;
     struct dir *newDirectory;
     char dirName[20];
     if(temp==NULL)
@@ -315,7 +359,8 @@ void add_directory(struct dir **next)
         strcpy(temp->dirName,dirName);
         temp->nextFile=NULL;
         temp->nextDir=NULL;
-        (*next)=temp;
+        temp->childDir=NULL;
+        (*next)->childDir=temp;
         printf("\nDirectory Created\n");
         return;
     }
@@ -331,6 +376,7 @@ void add_directory(struct dir **next)
         strcpy(newDirectory->dirName,dirName);
         newDirectory->nextDir=NULL;
         newDirectory->nextFile=NULL;
+        newDirectory->childDir=NULL;
         temp->nextDir=newDirectory;
         printf("\nDirectory Created\n");
         return;
@@ -368,7 +414,7 @@ struct dir *search_directory(struct dir **directory,char dirName[])
         }
         if(flag)
         {
-            printf("\nDirectory Found in Root\n");
+            printf("\nDirectory Found in %s\n",temp->dirName);
         }
         else
         {

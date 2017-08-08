@@ -50,6 +50,8 @@ int main()
                 printf("Enter Directory Name: ");
                 scanf("%s",dirName);
                 temp=search_directory(&directory,dirName);
+                if(temp==NULL)
+                    return;
                 add_file(&temp);
                 break;
             case 3:
