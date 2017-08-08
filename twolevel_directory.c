@@ -45,7 +45,11 @@ int main()
         printf("\n Press 7 To Delete a Sub Directory");
         printf("\n Press 8 To Create a file in Main Directories");
         printf("\n Press 9 To Create a file in a Sub Directory");
-        printf("\n Press 10 To Exit");
+        printf("\n Press 10 To Search a file in a Main Directory");
+        printf("\n Press 11 To Search a file in a Sub Directory");
+        printf("\n Press 12 To Delete a file in a Main Directory");
+        printf("\n Press 13 To Delete a file in a Sub Directory");
+        printf("\n Press 14 To Exit");
         printf("\n Enter Your Choice: ");
         scanf("%d",&ch);
         switch(ch)
@@ -81,8 +85,20 @@ int main()
                 }
                 break;
             case 6:
+                printf("Enter Directory Name: ");
+                scanf("%s",dirName);
+                delete_directory(&(directory->childDir),dirName);
                 break;
             case 7:
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    printf("Enter Sub Directory Name: ");
+                    scanf("%s",dirName);
+                    delete_directory(&(temp->childDir),dirName);
+                }
                 break;
             case 8:
                 printf("Enter Main Directory Name: ");
@@ -106,6 +122,26 @@ int main()
                 }
                 break;
             case 10:
+                printf("Enter File Name: ");
+                scanf("%s",fileName);
+                search_file(&(directory->childDir),fileName);
+                break;
+            case 11:
+                printf("Enter Main Directory Name: ");
+                scanf("%s",dirName);
+                temp=search_directory(&(directory->childDir),dirName);
+                if(temp!=NULL)
+                {
+                    printf("Enter File Name: ");
+                    scanf("%s",fileName);
+                    search_file(&(temp->childDir),fileName);
+                }
+                break;
+            case 12:
+                break;
+            case 13:
+                break;
+            case 14:
                 exit(0);
                 break;
         }
@@ -124,6 +160,7 @@ void delete_directory(struct dir **next,char dirName[])
 	}
 	if (strcmp(temp->dirName, dirName) == 0)
 	{   
+        printf("FIRST\n");
 		(*next) = temp->nextDir;
 		free(temp);
 		printf("Directory Deleted\n");
@@ -321,16 +358,15 @@ void display_directory(struct dir **directory)
                     printf("\n\t  --->%s(sub-dir-file)",childFiles->fileName);
                     childFiles=childFiles->next;
                 }
-                ftemp=temp->nextFile;
+                children=children->nextDir;
+            }
+            ftemp=temp->nextFile;
                 while(ftemp!=NULL)
                 {
                     printf("\n  |");
                     printf("\n  --->%s(file)",ftemp->fileName);
                     ftemp=ftemp->next;
                 }
-                children=children->nextDir;
-            }
-            
             printf("\n");
             temp=temp->nextDir;
         }
