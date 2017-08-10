@@ -13,10 +13,12 @@ struct dir
     char dirName[20];
     struct dir *nextDir;
     struct dir *childDir;
+    struct dir *mainDir;
     struct file *nextFile;
 };
 
 void display_directory(struct dir **next);
+void disp_cur_dir(struct dir **next);
 void add_directory(struct dir **next);
 void add_file(struct dir **next);
 void search_file(struct dir **next,char fName[]);
@@ -26,139 +28,107 @@ struct dir *search_directory(struct dir **next,char a[]);
 
 int main()
 {   
-    struct dir *directory,*temp,*subDir;
+    struct dir *directory,*temp,*subDir,*current;
     directory=(struct dir *)malloc(sizeof(struct dir));
     strcpy(directory->dirName,"root");
     directory->nextDir=NULL;
     directory->childDir=NULL;
     directory->nextFile=NULL;
+    directory->mainDir=NULL;
+    current=directory;
     int ch;
     char dirName[20],fileName[20];
     while(1)
     {
-        printf("\n Press 1 To Create a Directory In Root");
-        printf("\n Press 2 To Create a Sub Directory");
-        printf("\n Press 3 To Display Directory Structure");
-        printf("\n Press 4 To Search a Directory In Root");
-        printf("\n Press 5 To Search a Sub Directory");
-        printf("\n Press 6 To Delete Directory in Root");
-        printf("\n Press 7 To Delete a Sub Directory");
-        printf("\n Press 8 To Create a file in Main Directories");
-        printf("\n Press 9 To Create a file in a Sub Directory");
-        printf("\n Press 10 To Search a file in a Main Directory");
-        printf("\n Press 11 To Search a file in a Sub Directory");
-        printf("\n Press 12 To Delete a file in a Main Directory");
-        printf("\n Press 13 To Delete a file in a Sub Directory");
-        printf("\n Press 14 To Exit");
+        printf("\n Press 1 To Create a Directory Here");
+        printf("\n Press 2 To Change Directory");
+        printf("\n Press 3 To Display Current Directory");
+        printf("\n Press 4 To Change To Parent Directory");
+        printf("\n Press 5 To Display Contents Of Present Directory");
+        printf("\n Press 6 Search for a directory here");
+        printf("\n Press 7 To Delete a Directory Here");
+        printf("\n Press 8 To Create a file Here");
+        printf("\n Press 9 To Create a file In Sub Directory");
+        printf("\n Press 10 To Delete a file");
+        printf("\n Press 11 To Exit");
         printf("\n Enter Your Choice: ");
         scanf("%d",&ch);
         switch(ch)
         {
             case 1:
-                add_directory(&directory);
+                add_directory(&(current));
                 break;
             case 2:
-                printf("Enter Root Directory Name: ");
-                scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp==NULL)
-                    return;
-                add_directory(&temp);
-                break;
-            case 3:
-                display_directory(&directory);
-                break;
-            case 4:
                 printf("Enter Directory Name: ");
                 scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
+                temp=search_directory(&(current->childDir),dirName);
+                if(temp==NULL)
+                    break;
+                current=temp;
+                disp_cur_dir(&current);
                 break;
+            case 3:
+                disp_cur_dir(&current);
+                break;
+            case 4:
+                if (current->mainDir == NULL)
+				{
+					printf("End Reached. No parent left.\n");
+					break;
+				}
+				current = current->mainDir;
+                printf("\nDirectory Changed");
+				break;
             case 5:
-                printf("Enter Main Directory Name: ");
-                scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp!=NULL)
-                {
-                    printf("Enter Sub Directory Name: ");
-                    scanf("%s",dirName);
-                    subDir=search_directory(&(temp->childDir),dirName);
-                }
+                display_directory(&current);
                 break;
             case 6:
                 printf("Enter Directory Name: ");
                 scanf("%s",dirName);
-                delete_directory(&(directory->childDir),dirName);
+                temp=search_directory(&(current->childDir),dirName);
                 break;
             case 7:
                 printf("Enter Main Directory Name: ");
                 scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp!=NULL)
-                {
-                    printf("Enter Sub Directory Name: ");
-                    scanf("%s",dirName);
-                    delete_directory(&(temp->childDir),dirName);
-                }
+                delete_directory(&(current->childDir),dirName);
                 break;
             case 8:
+                add_file(&current);
+                break;
+            case 9:
                 printf("Enter Main Directory Name: ");
                 scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
+                temp=search_directory(&(current->childDir),dirName);
                 if(temp!=NULL)
                 {
                     add_file(&temp);
                 }
                 break;
-            case 9:
-                printf("Enter Main Directory Name: ");
-                scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp!=NULL)
-                {
-                    printf("Enter Sub Directory Name: ");
-                    scanf("%s",dirName);
-                    subDir=search_directory(&(temp->childDir),dirName);
-                    add_file(&subDir);
-                }
-                break;
             case 10:
                 printf("Enter File Name: ");
                 scanf("%s",fileName);
-                search_file(&(directory->childDir),fileName);
+                delete_file(&(current->childDir),fileName);
                 break;
             case 11:
-                printf("Enter Main Directory Name: ");
-                scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp!=NULL)
-                {
-                    printf("Enter File Name: ");
-                    scanf("%s",fileName);
-                    search_file(&(temp->childDir),fileName);
-                }
-                break;
-            case 12:
-                printf("Enter File Name: ");
-                scanf("%s",fileName);
-                delete_file(&(directory->childDir),fileName);
-                break;
-            case 13:
-                printf("Enter Main Directory Name: ");
-                scanf("%s",dirName);
-                temp=search_directory(&(directory->childDir),dirName);
-                if(temp!=NULL)
-                {
-                    printf("Enter File Name: ");
-                    scanf("%s",fileName);
-                    delete_file(&(temp->childDir),fileName);
-                }
-                break;
-            case 14:
                 exit(0);
                 break;
         }
     }
 }
+
+void disp_cur_dir(struct dir **next)
+{
+    struct dir *temp;
+    temp=(*next)->mainDir;
+    printf("\nPresent Directory is : %s-->",(*next)->dirName);
+    struct dir *current;
+    while(temp!=NULL)
+    {
+        printf("%s-->",temp->dirName);
+        temp=temp->mainDir;
+    }
+}
+
 void delete_directory(struct dir **next,char dirName[])
 {
     struct dir *temp;
@@ -408,6 +378,7 @@ void add_directory(struct dir **next)
         temp->nextFile=NULL;
         temp->nextDir=NULL;
         temp->childDir=NULL;
+        temp->mainDir=(*next);
         (*next)->childDir=temp;
         printf("\nDirectory Created\n");
         return;
@@ -426,6 +397,7 @@ void add_directory(struct dir **next)
         newDirectory->nextFile=NULL;
         newDirectory->childDir=NULL;
         temp->nextDir=newDirectory;
+        newDirectory->mainDir=(*next);
         printf("\nDirectory Created\n");
         return;
     }
@@ -462,7 +434,7 @@ struct dir *search_directory(struct dir **directory,char dirName[])
         }
         if(flag)
         {
-            printf("\nDirectory Found in %s\n",temp->dirName);
+            printf("\nDirectory Found :%s\n",temp->dirName);
         }
         else
         {
