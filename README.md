@@ -1,9 +1,11 @@
 # System-Software-Lab
-Programs For System Software Lab ==> S5-CS
-Amrith M 
-S1510
-TVE15CS010
-Solutions to the Lab-Cycle 
-<b>Completed</b>
-Program 1 - CPU Scheduling 
-Program 2-  1) Single Level Directory 2)Two Level 
+<br>Amrith M
+<br>S1510
+<br>TVE15CS010
+<br>Programs For System Software Lab ==> S5-CS ==>Solutions to the Lab-Cycle 
+<br>
+<h2>Completed</h2>
+<ul>
+  <li>Program 1 - CPU Scheduling</li>
+  <li>Program 2-  1) Single Level Directory 2)Two Level </li>
+</ul>
