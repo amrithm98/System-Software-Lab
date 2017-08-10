@@ -137,7 +137,7 @@ void delete_directory(struct dir **next,char dirName[])
 	ptr = (*next);
 	if (temp == NULL)
 	{
-		printf("No directories in ROOT\n");
+		printf("No directories\n");
 		return;
 	}
 	if (strcmp(temp->dirName, dirName) == 0)
@@ -247,7 +247,7 @@ void search_file(struct dir **directory,char fName[])
     int flag=0;
     if(temp==NULL)
     {
-        printf("\nRoot has No Directories\n");
+        printf("\nNo Directories\n");
         return;
     }
     else
@@ -317,7 +317,7 @@ void display_directory(struct dir **directory)
     temp=(*directory)->childDir;
     if(temp==NULL)
     {
-        printf("\nRoot has No Directories\n");
+        printf("\nNo Directories\n");
         return;
     }
     else
@@ -416,7 +416,7 @@ struct dir *search_directory(struct dir **directory,char dirName[])
     }
     if(temp==NULL)
     {
-        printf("\nNo Such Directory in Root\n");
+        printf("\nNo Such Directory\n");
         ret_dir=NULL;
     }
     else{
