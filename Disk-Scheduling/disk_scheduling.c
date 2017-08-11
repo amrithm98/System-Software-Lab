@@ -5,7 +5,7 @@ void copy_queue(int tracks_copy[],int n);
 void fcfs_sched(int n,int head);
 void scan_sched(int n,int head);
 void cscan_sched(int n,int head);
-
+void sort(int n);
 int tracks[20],tracks_copy[20];
 
 int main()
@@ -55,6 +55,23 @@ int main()
     return 0;
 }
 
+void sort(int n)
+{
+    int i,j;
+    for(i=0;i<n-1;i++)
+    {
+        for(j=0;j<n-1;j++)
+        {
+            if(tracks_copy[j]>tracks_copy[j+1])
+            {
+                int temp=tracks_copy[j];
+                tracks_copy[j]=tracks_copy[j+1];
+                tracks_copy[j+1]=temp;
+            }
+        }
+    }
+}
+
 void copy_queue(int tracks_copy[],int n)
 {
     int i=0;
@@ -80,10 +97,74 @@ void fcfs_sched(int n,int head)
 
 void scan_sched(int n,int head)
 {
+    int i,j;
+    sort(n);
+    for(i=0;i<n;i++)
+        printf("%d\t",tracks_copy[i]);
+    int seek=0,seekSum=0;
+    int curr=head;
+    int currIndex=0;
+    for(i=0;i<n;i++)
+    {
+        if(head<=tracks_copy[i])
+        {
+            currIndex=i;
+            break;
+        }
+    }
+    printf("\nCurr Head %d Curr Index %d",curr,currIndex);
+    for(i=currIndex;i<n;i++)
+    {   
+        seek=abs(curr-tracks_copy[i]);
+        seekSum+=seek;
+        printf("\nMove from %d to %d with SEEK: %d",curr,tracks_copy[i],seek);
+        curr=tracks_copy[i];
+    }
+    for(i=currIndex-1;i>=0;i--)
+    {
+        seek=abs(curr-tracks_copy[i]);
+        seekSum+=seek;
+        printf("\nMove from %d to %d with SEEK: %d",curr,tracks_copy[i],seek);
+        curr=tracks_copy[i];
+    }
+    printf("\nTotal SEEK Time:%d",seekSum);
+    printf("\nAverage SEEK Time:%f",(float)seekSum/n);
 
 }
 
 void cscan_sched(int n,int head)
 {
-
+    int i,j;
+    sort(n);
+    for(i=0;i<n;i++)
+        printf("%d\t",tracks_copy[i]);
+    int seek=0,seekSum=0;
+    int curr=head;
+    int currIndex=0;
+    for(i=0;i<n;i++)
+    {
+        if(head<=tracks_copy[i])
+        {
+            currIndex=i;
+            break;
+        }
+    }
+    printf("\nCurr Head %d Curr Index %d",curr,currIndex);
+    for(i=currIndex;i<n;i++)
+    {   
+        seek=abs(curr-tracks_copy[i]);
+        seekSum+=seek;
+        printf("\nMove from %d to %d with SEEK: %d",curr,tracks_copy[i],seek);
+        curr=tracks_copy[i];
+    }
+    curr=0;
+    for(i=0;i<currIndex;i++)
+    {
+        seek=abs(curr-tracks_copy[i]);
+        seekSum+=seek;
+        printf("\nMove from %d to %d with SEEK: %d",curr,tracks_copy[i],seek);
+        curr=tracks_copy[i];
+    }
+    printf("\nTotal SEEK Time:%d",seekSum);
+    printf("\nAverage SEEK Time:%f",(float)seekSum/n);
 }
