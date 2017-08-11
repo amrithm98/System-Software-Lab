@@ -51,7 +51,7 @@ int main()
                 scanf("%s",dirName);
                 temp=search_directory(&directory,dirName);
                 if(temp==NULL)
-                    return;
+                    break;
                 add_file(&temp);
                 break;
             case 3:

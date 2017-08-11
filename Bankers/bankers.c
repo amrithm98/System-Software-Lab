@@ -54,7 +54,13 @@ void findSafeState(int avail[],int max[][20],int alloc[][20],int n,int m)
     int i,j,k;
 
     findNeed(need,max,alloc,n,m);
-    
+    printf("\nNeed Matrix Is: \n");
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<m;j++)
+            printf("%d ",need[i][j]);
+        printf("\n");
+    }
     for(i=0;i<n;i++)
         finish[i]=0;
 
