@@ -107,7 +107,7 @@ int main()
             case 10:
                 printf("Enter File Name: ");
                 scanf("%s",fileName);
-                delete_file(&(current->childDir),fileName);
+                delete_file(&(current),fileName);
                 break;
             case 11:
                 exit(0);
