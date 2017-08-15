@@ -9,4 +9,5 @@
   <li>Program 1 - CPU Scheduling</li>
   <li>Program 2-  1) Single Level Directory 2)Two Level 3)Hierarchical</li>
   <li>Program 3 - Banker's Algorithm</li>
+  <li>Program 4 - Disk Scheduling Algorithm</li>
 </ul>
