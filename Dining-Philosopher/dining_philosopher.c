@@ -8,10 +8,10 @@ void think(int chopSticks[],int i,int n);
 
 void eat(int chopSticks[],int i,int n)
 {
-    int lock;
-    lock=wait(chopSticks,i);
-
-    if(lock==0)
+    int lock1,lock2;
+    lock1=wait(chopSticks,i);
+    lock2=wait(chopSticks,(i+1)%n);
+    if(lock1==0 || lock2==0)
         return;
 
     else
@@ -24,10 +24,11 @@ void eat(int chopSticks[],int i,int n)
 
 void think(int chopSticks[],int i,int n)
 {
-    int lock;
-    lock=Signal(chopSticks,i);
+    int lock1,lock2;
+    lock2=Signal(chopSticks,(i+1)%n);
+    lock1=Signal(chopSticks,i);
 
-    if(lock==0)
+    if(lock1==0 || lock2==0)
         return;
     else
     {
@@ -43,7 +44,7 @@ int wait(int chopSticks[],int i)
 {
     if(chopSticks[i]==0)
     {
-        printf("\nNo ChopStick Available");
+        printf("\nTwo ChopSticks Not Available");
         return 0;
     }
     else    
@@ -54,7 +55,7 @@ int Signal(int chopSticks[],int i)
 {
     if(chopSticks[i]==1)
     {
-        printf("\nChopStick Available");
+        printf("\n Two ChopSticks Available");
         return 0;
     }
     else    
@@ -88,11 +89,15 @@ int main()
                 printf("\nWhich Philosopher wants to eat ? :");
                 scanf("%d",&i);
                 eat(chopSticks,i-1,n);
+                // for(int i=0;i<n;i++)
+                //     printf("%d ",chopSticks[i]);
                 break;
             case 2:
                 printf("\nWhich Philosopher wants to think?");
                 scanf("%d",&i);
                 think(chopSticks,i-1,n);
+                // for(int i=0;i<n;i++)
+                //     printf("%d ",chopSticks[i]);
                 break;
             case 3:
                 exit(0);
