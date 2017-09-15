@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
-
+#include <iomanip>
 using namespace std;
 
 class Line  
@@ -78,16 +78,23 @@ void first_pass(string fileName)
     
     unordered_map<string,string> symtab;
 
-    string locCtr,programName,startAddress;
+    int locCtr,startAddress;
+
+    string programName;
 
     /*First Line of Program Contains a START Command Followed By Starting Address*/
     Line line=readLine(file);
 
     if(line.opCode=="START")
     {
-        startAddress=line.operand;
+        stringstream temp;
+        
+        temp<<setw(4)<<setfill('0')<<hex<<line.operand;
+        temp>>locCtr;
+
+        startAddress=locCtr;
         programName=line.label;
-        intermediateFile<<startAddress<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
+        intermediateFile<<temp.str()<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
     }
     else
     {
@@ -95,10 +102,13 @@ void first_pass(string fileName)
         exit(0);
     }
 
-    while(line.opCode!="END")
-    {
+    // while(line.opCode!="END")
+    // {
+    //     if(line.label=="" || line.label[0]!='.')
+    //     {
 
-    }
+    //     }
+    // }
 }
 
 int main()
