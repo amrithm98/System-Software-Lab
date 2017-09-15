@@ -69,12 +69,8 @@ void init_optab(map<string,string> &map)
     map["WD"]="DC";
 }
 
-void first_pass(string fileName)
+map<string,string> first_pass(string fileName,map<string,string> optab)
 {
-    map<string,string> optab;
-
-    init_optab(optab);
-
     string assembler_directives[]={"BYTE","WORD","RESB","RESW"};
 
     ifstream file(fileName);    //Reading Input File
@@ -83,7 +79,7 @@ void first_pass(string fileName)
     
     map<string,string> symtab;  //Map For SymTab
 
-    int locCtr,startAddress;
+    int locCtr=0,startAddress;
 
     string programName;
 
@@ -109,13 +105,16 @@ void first_pass(string fileName)
     }
 	line=readLine(file);
 
+    int finAddr=0;
+
     while(line.label!="END")
     {
         if(line.label=="" || line.label[0]!='.')
         {
             //Not a comment
             stringstream temp;
-            cout<<locCtr<<"\n";
+            cout<<locCtr<<"\n"; //Prints Decimal Value
+            finAddr=locCtr;
             temp<<setw(4)<<setfill('0')<<hex<<locCtr;
             intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
             
@@ -128,63 +127,68 @@ void first_pass(string fileName)
                     cout<<"\nError:Duplicate Label "<<line.label<<"\t("<<symtab[line.label]<<")";
                     exit(0);
                 }
-
-                if(line.opCode=="WORD")
-                {
-                    locCtr+=3;
-                }
-                else if(optab.count(line.opCode))
-                {
-                    locCtr+=3;
-                }
-                else if(line.opCode=="RESW" || line.opCode=="RESB")
-                {
-                    int inc;
-                    stringstream sizeTemp;
-                    sizeTemp<<hex<<line.operand;
-                    sizeTemp>>inc;
-                    if(line.opCode=="RESW")
-                    {
-                        inc*=3;
-                    }
-                    locCtr+=inc;
-                }
-                else if(line.opCode=="BYTE")
-                {
-                    int inc=line.operand.size();
-                    if(line.operand[0]=='X')
-                        inc/=2;
-                    locCtr+=inc;
-                }
-                else
-                {
-                    cout<<"\nError: Invalid OpCode "<<line.opCode;
-                    exit(0);
-                }
             }
-            line=readLine(file);
+            if(line.opCode=="WORD")
+            {
+                locCtr+=3;
+            }
+            else if(optab.count(line.opCode))
+            {
+                locCtr+=3;
+            }
+            else if(line.opCode=="RESW" || line.opCode=="RESB")
+            {
+                int inc;
+                stringstream sizeTemp;
+                sizeTemp<<hex<<line.operand;
+                sizeTemp>>inc;
+                if(line.opCode=="RESW")
+                {
+                    inc*=3;
+                }
+                locCtr+=inc;
+            }
+            else if(line.opCode=="BYTE")
+            {
+                int inc=line.operand.length()-3;
+                if(line.operand[0]=='X')
+                    inc/=2;
+                locCtr+=inc;
+            }
+            else
+            {
+                cout<<"\nError: Invalid OpCode "<<line.opCode;
+                exit(0);
+            }
         }
+        line=readLine(file);
     }
-    int programSize=locCtr-startAddress;
-
-    stringstream temp;
-    temp<<setw(4)<<setfill('0')<<hex<<line.opCode;
-    intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
-    symtab["programSize"]=to_string(programSize);
-
+    
+    symtab["programSize"]=to_string(finAddr-startAddress+3);
     ofstream symtabFile("SYMTAB");
     for(auto it:symtab)
         symtabFile<<it.first<<" "<<it.second<<endl;
 
+    symtabFile.close();
+    file.close();
+
+    return symtab;
 }
 
 int main()
 {
     string fileName;
 
+    map<string,string> opTab;
+    map<string,string> symTab;
+
+    init_optab(opTab);
+
     cout<<"\nEnter File Name: ";
     cin>>fileName;
 
-    first_pass(fileName);
+    symTab=first_pass(fileName,opTab);
+
+
 
 }
