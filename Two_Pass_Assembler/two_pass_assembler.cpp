@@ -4,7 +4,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <unordered_map>
+#include <map>
 #include <iomanip>
 using namespace std;
 
@@ -24,6 +24,7 @@ Line readLine(istream &file)
 {
     string line="",label,opCode,operand;
 
+    //Just Read One Line
     while(line.length()==0)
     {
         getline(file,line);
@@ -38,7 +39,7 @@ Line readLine(istream &file)
     return Line(label,opCode,operand);
 }
 
-void init_optab(unordered_map<string,string> &map)
+void init_optab(map<string,string> &map)
 {
     map["ADD"]="18";
 	map["AND"]="40";
@@ -70,13 +71,17 @@ void init_optab(unordered_map<string,string> &map)
 
 void first_pass(string fileName)
 {
+    map<string,string> optab;
+
+    init_optab(optab);
+
     string assembler_directives[]={"BYTE","WORD","RESB","RESW"};
 
-    ifstream file(fileName);
+    ifstream file(fileName);    //Reading Input File
 
-    ofstream intermediateFile("intermediate.txt");
+    ofstream intermediateFile("intermediate.txt");  //Writing Intermediate File
     
-    unordered_map<string,string> symtab;
+    map<string,string> symtab;  //Map For SymTab
 
     int locCtr,startAddress;
 
@@ -98,26 +103,84 @@ void first_pass(string fileName)
     }
     else
     {
-        cout<<"\nNo START Command";
-        exit(0);
+        // cout<<"\nNo START Command";
+        // exit(0);
+        locCtr=0;
     }
+	line=readLine(file);
 
     while(line.label!="END")
     {
         if(line.label=="" || line.label[0]!='.')
         {
+            //Not a comment
+            stringstream temp;
+            cout<<locCtr<<"\n";
+            temp<<setw(4)<<setfill('0')<<hex<<locCtr;
+            intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
             
+            if(line.label!="")
+            {
+                if(symtab.find(line.label)==symtab.end())
+                    symtab[line.label]=to_string(locCtr);
+                else
+                {
+                    cout<<"\nError:Duplicate Label "<<line.label<<"\t("<<symtab[line.label]<<")";
+                    exit(0);
+                }
+
+                if(line.opCode=="WORD")
+                {
+                    locCtr+=3;
+                }
+                else if(optab.count(line.opCode))
+                {
+                    locCtr+=3;
+                }
+                else if(line.opCode=="RESW" || line.opCode=="RESB")
+                {
+                    int inc;
+                    stringstream sizeTemp;
+                    sizeTemp<<hex<<line.operand;
+                    sizeTemp>>inc;
+                    if(line.opCode=="RESW")
+                    {
+                        inc*=3;
+                    }
+                    locCtr+=inc;
+                }
+                else if(line.opCode=="BYTE")
+                {
+                    int inc=line.operand.size();
+                    if(line.operand[0]=='X')
+                        inc/=2;
+                    locCtr+=inc;
+                }
+                else
+                {
+                    cout<<"\nError: Invalid OpCode "<<line.opCode;
+                    exit(0);
+                }
+            }
+            line=readLine(file);
         }
-        line=readLine(file);
     }
+    int programSize=locCtr-startAddress;
+
+    stringstream temp;
+    temp<<setw(4)<<setfill('0')<<hex<<line.opCode;
+    intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
+    symtab["programSize"]=to_string(programSize);
+
+    ofstream symtabFile("SYMTAB");
+    for(auto it:symtab)
+        symtabFile<<it.first<<" "<<it.second<<endl;
+
 }
 
 int main()
 {
     string fileName;
-
-    unordered_map<string,string> optab;
-    init_optab(optab);
 
     cout<<"\nEnter File Name: ";
     cin>>fileName;
