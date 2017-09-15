@@ -111,13 +111,13 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     {
         if(line.label=="" || line.label[0]!='.')
         {
-            //Not a comment
+            //Not a comment or if the label is empty
             stringstream temp;
-            cout<<locCtr<<"\n"; //Prints Decimal Value
+            cout<<locCtr<<"\n"; //Prints Decimal Value ***1000H=4096D
             finAddr=locCtr;
             temp<<setw(4)<<setfill('0')<<hex<<locCtr;
             intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
-            
+
             if(line.label!="")
             {
                 if(symtab.find(line.label)==symtab.end())
@@ -150,7 +150,8 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
             }
             else if(line.opCode=="BYTE")
             {
-                int inc=line.operand.length()-3;
+                int inc=line.operand.size()-3;  //Remove C,X or whatever and the two apostrophies = remove 3 characters
+                // cout<<"\nByte"<<inc<<"\n";
                 if(line.operand[0]=='X')
                     inc/=2;
                 locCtr+=inc;
