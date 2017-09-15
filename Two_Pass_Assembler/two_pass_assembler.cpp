@@ -8,6 +8,18 @@
 
 using namespace std;
 
+class Line  
+{
+    public:
+        string label,opCode,operand;
+        Line(string a,string b,string c)
+        {
+            label=a;
+            opCode=b;
+            operand=c;
+        }
+};
+
 void init_optab(unordered_map<string,string> &map)
 {
     map["ADD"]="18";
@@ -38,6 +50,64 @@ void init_optab(unordered_map<string,string> &map)
     map["WD"]="DC";
 }
 
+void first_pass(string fileName)
+{
+    string assembler_directives[]={"BYTE","WORD","RESB","RESW"};
+
+    ifstream file(fileName);
+
+    unordered_map<string,string> symtab;
+
+    string locCtr,programName;
+    
+    /*First Line of Program Contains a START Command Followed By Starting Address*/
+    string start_line;
+    getline(file,start_line);
+    stringstream ss(start_line);
+    string temp;
+    vector<string> tokens;
+
+    while(ss>>temp)
+    {
+        tokens.push_back(temp);
+    }
+    for(int i=0;i<tokens.size();i++)
+    {
+        
+        if(tokens[i]=="START")
+        {
+            locCtr=tokens[i+1];
+            break;
+        }
+        else
+        {
+            programName=tokens[i];
+        }
+    }
+
+    for(string line;getline(file,line);)
+    {
+        stringstream ss(line);   
+
+        while(ss>>temp)
+        {
+            tokens.push_back(temp);
+        }
+
+        int size=tokens.size();
+    
+        switch(size)
+        {
+            case 3:
+                break;
+            case 2:
+                break;
+            case 1:
+                break;
+        }
+    }
+}
+
 int main()
 {
     string fileName;
@@ -48,17 +118,6 @@ int main()
     cout<<"\nEnter File Name: ";
     cin>>fileName;
 
-    ifstream file(fileName);
-    for(string line;getline(file,line);)
-    {
-        stringstream ss(line);
-        string temp;
-        vector<string> tokens;
-        while(ss>>temp)
-        {
-            tokens.push_back(temp);
-        }
-    }
-
+    first_pass(fileName);
 
 }
