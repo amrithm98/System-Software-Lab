@@ -102,13 +102,14 @@ void first_pass(string fileName)
         exit(0);
     }
 
-    // while(line.opCode!="END")
-    // {
-    //     if(line.label=="" || line.label[0]!='.')
-    //     {
-
-    //     }
-    // }
+    while(line.label!="END")
+    {
+        if(line.label=="" || line.label[0]!='.')
+        {
+            
+        }
+        line=readLine(file);
+    }
 }
 
 int main()
