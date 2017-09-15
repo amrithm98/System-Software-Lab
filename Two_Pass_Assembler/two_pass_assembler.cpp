@@ -113,7 +113,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
         {
             //Not a comment or if the label is empty
             stringstream temp;
-            cout<<locCtr<<"\n"; //Prints Decimal Value ***1000H=4096D
+            cout<<"\nLocCtr: "<<locCtr<<"\n"; //Prints Decimal Value ***1000H=4096D
             finAddr=locCtr;
             temp<<setw(4)<<setfill('0')<<hex<<locCtr;
             intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
@@ -124,7 +124,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
                     symtab[line.label]=to_string(locCtr);
                 else
                 {
-                    cout<<"\nError:Duplicate Label "<<line.label<<"\t("<<symtab[line.label]<<")";
+                    cout<<"\nError:Duplicate Label "<<line.label<<"\t("<<hex<<symtab[line.label]<<")";
                     exit(0);
                 }
             }
@@ -173,7 +173,17 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     symtabFile.close();
     file.close();
 
+    cout<<"\nCompleted Pass 1 Successfully!!!";
     return symtab;
+
+}
+
+void second_pass(map<string,string> opTab,map<string,string> symTab,string fileName)
+{
+
+    ifstream input(fileName);
+    ifstream intermediate("intermediate.txt");
+
 }
 
 int main()
@@ -190,6 +200,7 @@ int main()
 
     symTab=first_pass(fileName,opTab);
 
+    second_pass(opTab,symTab,fileName);
 
-
+    return 0;
 }
