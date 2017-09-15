@@ -20,6 +20,24 @@ class Line
         }
 };
 
+Line readLine(istream &file)
+{
+    string line="",label,opCode,operand;
+
+    while(line.length()==0)
+    {
+        getline(file,line);
+    }
+
+    stringstream ss(line);
+
+    getline(ss,label,' ');
+    getline(ss,opCode,' ');
+    getline(ss,operand,' ');
+
+    return Line(label,opCode,operand);
+}
+
 void init_optab(unordered_map<string,string> &map)
 {
     map["ADD"]="18";
@@ -56,55 +74,30 @@ void first_pass(string fileName)
 
     ifstream file(fileName);
 
+    ofstream intermediateFile("intermediate.txt");
+    
     unordered_map<string,string> symtab;
 
-    string locCtr,programName;
-    
+    string locCtr,programName,startAddress;
+
     /*First Line of Program Contains a START Command Followed By Starting Address*/
-    string start_line;
-    getline(file,start_line);
-    stringstream ss(start_line);
-    string temp;
-    vector<string> tokens;
+    Line line=readLine(file);
 
-    while(ss>>temp)
+    if(line.opCode=="START")
     {
-        tokens.push_back(temp);
+        startAddress=line.operand;
+        programName=line.label;
+        intermediateFile<<startAddress<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
     }
-    for(int i=0;i<tokens.size();i++)
+    else
     {
-        
-        if(tokens[i]=="START")
-        {
-            locCtr=tokens[i+1];
-            break;
-        }
-        else
-        {
-            programName=tokens[i];
-        }
+        cout<<"\nNo START Command";
+        exit(0);
     }
 
-    for(string line;getline(file,line);)
+    while(line.opCode!="END")
     {
-        stringstream ss(line);   
 
-        while(ss>>temp)
-        {
-            tokens.push_back(temp);
-        }
-
-        int size=tokens.size();
-    
-        switch(size)
-        {
-            case 3:
-                break;
-            case 2:
-                break;
-            case 1:
-                break;
-        }
     }
 }
 
