@@ -11,16 +11,17 @@ using namespace std;
 class Line  
 {
     public:
-        string label,opCode,operand;
-        Line(string a,string b,string c)
+        string label,opCode,operand,loc;
+        Line(string a,string b,string c,string d)
         {
             label=a;
             opCode=b;
             operand=c;
+            loc=d;
         }
 };
 
-Line readLine(istream &file)
+Line readLine(istream &file)    //Reading Each Line of Input.. Max 3 Items
 {
     string line="",label,opCode,operand;
 
@@ -36,7 +37,26 @@ Line readLine(istream &file)
     getline(ss,opCode,' ');
     getline(ss,operand,' ');
 
-    return Line(label,opCode,operand);
+    return Line(label,opCode,operand,"");
+}
+
+Line readLine_symTab(istream &file) //Reading Each Line of Intermediate File
+{
+    string line="",label,opCode,operand,loc;
+
+    //Just Read One Line
+    while(line.length()==0)
+    {
+        getline(file,line);
+    }
+
+    stringstream ss(line);
+    getline(ss,loc,' ');
+    getline(ss,label,' ');
+    getline(ss,opCode,' ');
+    getline(ss,operand,' ');
+
+    return Line(label,opCode,operand,loc);
 }
 
 void init_optab(map<string,string> &map)
@@ -103,18 +123,22 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
         // exit(0);
         locCtr=0;
     }
+    //Read the next Line
+
 	line=readLine(file);
 
     int finAddr=0;
 
     while(line.label!="END")
     {
+        //Not a comment or if the label is empty
         if(line.label=="" || line.label[0]!='.')
         {
-            //Not a comment or if the label is empty
             stringstream temp;
-            cout<<"\nLocCtr: "<<locCtr<<"\n"; //Prints Decimal Value ***1000H=4096D
-            finAddr=locCtr;
+            //Prints Decimal Value ***1000H=4096D
+            cout<<"\nLocCtr: "<<locCtr<<"\n"; 
+            //To Store the Last Value of locCtr to find the ProgramSize
+            finAddr=locCtr; 
             temp<<setw(4)<<setfill('0')<<hex<<locCtr;
             intermediateFile<<temp.str()<<" "+line.label+" "+line.opCode+" "+line.operand<<"\n";
 
@@ -132,7 +156,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
             {
                 locCtr+=3;
             }
-            else if(optab.count(line.opCode))
+            else if(optab.count(line.opCode))   //If OpCode Exists in opTab
             {
                 locCtr+=3;
             }
@@ -166,6 +190,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     }
     
     symtab["programSize"]=to_string(finAddr-startAddress+3);
+    
     ofstream symtabFile("SYMTAB");
     for(auto it:symtab)
         symtabFile<<it.first<<" "<<it.second<<endl;
@@ -181,8 +206,44 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
 void second_pass(map<string,string> opTab,map<string,string> symTab,string fileName)
 {
 
+    //Reading From Intermediate File
     ifstream input(fileName);
     ifstream intermediate("intermediate.txt");
+
+    //Output File object
+    ofstream output("OUTPUT");
+
+    int locCtr=0;
+
+    Line line=readLine_symTab(intermediate);
+
+    if(line.opCode=="START")
+    {
+        stringstream loc,progName,progSize;
+        loc<<setw(6)<<setfill('0')<<hex<<line.loc;
+        progName<<setw(6)<<setfill('_')<<line.label;
+
+        if(line.label=="")
+            line.label="OBJECT";
+        
+        int programSize=stoi(symTab["programSize"]);
+
+        string start=loc.str();
+
+        loc>>locCtr;
+
+        string headerRecord="H^"+loc.str()+"^"+progName.str()+"^";
+        progSize<<setw(6)<<setfill('0')<<programSize;
+
+        output<<headerRecord<<progSize.str()<<"\n";
+
+        line=readLine_symTab(intermediate);
+    }
+    
+
+
+
+
 
 }
 
