@@ -18,4 +18,6 @@
   
   <li><b>Lab Cycle 2</b></li>
   <li><b>============</b></li>
+  <li>Pass One of a Two-Pass Assembler</li>
+  <li>Pass Two of a Two-Pass Assembler</li>
 </ul>
