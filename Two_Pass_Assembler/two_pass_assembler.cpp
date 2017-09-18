@@ -129,7 +129,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
 
     int finAddr=0;
 
-    while(line.label!="END")
+    while(line.opCode!="END")
     {
         //Not a comment or if the label is empty
         if(line.label=="" || line.label[0]!='.')
@@ -163,9 +163,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
             else if(line.opCode=="RESW" || line.opCode=="RESB")
             {
                 int inc;
-                stringstream sizeTemp;
-                sizeTemp<<hex<<line.operand;
-                sizeTemp>>inc;
+                inc=stol(line.operand);
                 if(line.opCode=="RESW")
                 {
                     inc*=3;
@@ -188,8 +186,11 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
         }
         line=readLine(file);
     }
-    
-    symtab["programSize"]=to_string(finAddr-startAddress+3);
+
+
+    intermediateFile<<hex<<locCtr<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
+
+    symtab["programSize"]=to_string(locCtr-startAddress+1);
     
     ofstream symtabFile("SYMTAB");
     for(auto it:symtab)
@@ -219,28 +220,35 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
 
     if(line.opCode=="START")
     {
-        stringstream loc,progName,progSize;
-        loc<<setw(6)<<setfill('0')<<hex<<line.loc;
-        progName<<setw(6)<<setfill('_')<<line.label;
-
         if(line.label=="")
             line.label="OBJECT";
-        
+
+        stringstream loc,progName,progSize;
+        loc<<setw(6)<<setfill('0')<<hex<<line.loc;
+        progName<<setw(6)<<setfill(' ')<<line.label;
+
         int programSize=stoi(symTab["programSize"]);
 
         string start=loc.str();
 
         loc>>locCtr;
 
-        string headerRecord="H^"+loc.str()+"^"+progName.str()+"^";
-        progSize<<setw(6)<<setfill('0')<<programSize;
+        string headerRecord="H^"+progName.str()+"^"+loc.str()+"^";
+        progSize<<setw(6)<<setfill('0')<<hex<<programSize;
 
         output<<headerRecord<<progSize.str()<<"\n";
 
         line=readLine_symTab(intermediate);
     }
-    
+    while(line.opCode!="END")
+    {
 
+        if(opTab.count(line.opCode))
+        {
+
+        }
+        line=readLine_symTab(intermediate);
+    }
 
 
 
