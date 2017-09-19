@@ -245,7 +245,7 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
 
         if(opTab.count(line.opCode))
         {
-
+            
         }
         line=readLine_symTab(intermediate);
     }
