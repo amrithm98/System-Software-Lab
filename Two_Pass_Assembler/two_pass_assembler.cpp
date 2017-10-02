@@ -6,6 +6,7 @@
 #include <sstream>
 #include <map>
 #include <iomanip>
+#include <bitset>
 using namespace std;
 
 class Line  
@@ -19,6 +20,41 @@ class Line
             operand=c;
             loc=d;
         }
+};
+class TextRecord
+{
+    public:
+     string s;
+
+    TextRecord()
+    {
+        s="T^      ^  ^";
+    }
+
+    void addStartAndRecordLength(int start,int end)
+    {
+        stringstream ss;
+        ss<<hex<<end-start+1;
+        string addr=ss.str();
+        s.replace(9,2,addr);
+
+        stringstream temp;
+        temp<<setw(6)<<setfill('0')<<hex<<start;
+        s.replace(2,6,temp.str());
+    }
+
+    bool isValidRecord(int next_opcode_length)
+    {
+        if(s.size()+next_opcode_length<=69)
+            return 1;
+        else
+            return 0;
+    }
+
+    void appendOpcode(string opCode)
+    {
+        s+=opCode+"^";
+    }
 };
 
 Line readLine(istream &file)    //Reading Each Line of Input.. Max 3 Items
@@ -57,6 +93,13 @@ Line readLine_symTab(istream &file) //Reading Each Line of Intermediate File
     getline(ss,operand,' ');
 
     return Line(label,opCode,operand,loc);
+}
+
+string convert_to_hex_string(int addr)
+{
+    stringstream ss;
+    ss<<hex<<addr;
+    return ss.str();
 }
 
 void init_optab(map<string,string> &map)
@@ -119,8 +162,6 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     }
     else
     {
-        // cout<<"\nNo START Command";
-        // exit(0);
         locCtr=0;
     }
     //Read the next Line
@@ -190,12 +231,18 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
 
     intermediateFile<<hex<<locCtr<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
 
-    symtab["programSize"]=to_string(locCtr-startAddress+1);
+    cout<<locCtr<<"\t";
+
+    stringstream ss;
+    ss<<locCtr-startAddress+1;
+
+    // symtab["programSize"]=(ss.str());
+    symtab["programSize"]=(ss.str());
     
     ofstream symtabFile("SYMTAB");
     for(auto it:symtab)
         symtabFile<<it.first<<" "<<it.second<<endl;
-
+    
     symtabFile.close();
     file.close();
 
@@ -240,16 +287,88 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
 
         line=readLine_symTab(intermediate);
     }
+
+    TextRecord TR[10];
+    int textRecordIndex=0;
     while(line.opCode!="END")
     {
 
-        if(opTab.count(line.opCode))
+        if(line.label!=".")
         {
-            
+            if(opTab.count(line.opCode))
+            {
+                if(line.opCode=="WORD")
+                {
+
+                }
+                else if(line.opCode=="BYTE")
+                {
+                    //Fix Ascii to opcode
+                    
+                }
+                else if(line.opCode=="RESW")
+                {
+
+                }
+                else if(line.opCode=="RESB")
+                {
+                    
+                }
+                if(line.operand.compare(""))
+                {
+                    size_t found = line.operand.find(',');
+                    if(found!=string::npos)
+                    {
+                        //Indexed
+                        string hexAddr=convert_to_hex_string(stoi(symTab[line.operand.substr(0,found)]));
+                        char firstBit=hexAddr[0];
+                        bitset<4> b(firstBit-'0');
+                        b[3]=1;
+                        stringstream ss;
+                        ss<<hex<<b.to_ulong();
+                        hexAddr[0]=ss.str()[0];
+                        string opCode="";
+                        opCode+=(opTab[line.opCode]+hexAddr);
+                        if(TR[textRecordIndex].isValidRecord(opCode.size()))
+                            TR[textRecordIndex].appendOpcode(opCode);
+                        else
+                        {
+                            textRecordIndex++;
+                            //Calculate Record Length
+                        }
+                    }
+                    else
+                    {
+                        string opCode="";
+                        opCode+=(opTab[line.opCode]+convert_to_hex_string(stoi(symTab[line.operand])));
+                        cout<<opCode<<"\n";
+                        if(TR[textRecordIndex].isValidRecord(opCode.size()))
+                            TR[textRecordIndex].appendOpcode(opCode);
+                        else
+                        {
+                            textRecordIndex++;
+                            //Calculate Record Length
+                        }
+                    }
+                }
+                else
+                {
+                    stringstream ss;
+                    ss<<left<<setw(6)<<setfill('0')<<opTab[line.opCode];
+                    if(TR[textRecordIndex].isValidRecord(ss.str().size()))
+                            TR[textRecordIndex].appendOpcode(ss.str());
+                    else
+                    {
+                        textRecordIndex++;
+                        //Calculate Record Length
+                    }
+                }
+            }
         }
+        
         line=readLine_symTab(intermediate);
     }
-
+    output<<TR[0].s<<endl;
 
 
 
