@@ -28,7 +28,7 @@ class TextRecord
 
     TextRecord()
     {
-        s="T^      ^  ^";
+        s="T^      ^  ";
     }
 
     void addStartAndRecordLength(int start,int end)
@@ -53,7 +53,7 @@ class TextRecord
 
     void appendOpcode(string opCode)
     {
-        s+=opCode+"^";
+        s+=("^"+opCode);
     }
 };
 
@@ -292,28 +292,11 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
     int textRecordIndex=0;
     while(line.opCode!="END")
     {
-
+        cout<<"\nRecird Index: "<<textRecordIndex<<"\n";
         if(line.label!=".")
         {
             if(opTab.count(line.opCode))
             {
-                if(line.opCode=="WORD")
-                {
-
-                }
-                else if(line.opCode=="BYTE")
-                {
-                    //Fix Ascii to opcode
-                    
-                }
-                else if(line.opCode=="RESW")
-                {
-
-                }
-                else if(line.opCode=="RESB")
-                {
-                    
-                }
                 if(line.operand.compare(""))
                 {
                     size_t found = line.operand.find(',');
@@ -364,11 +347,58 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                     }
                 }
             }
+            if(line.opCode=="WORD")
+            {
+                stringstream ss;
+                ss<<setw(6)<<setfill('0')<<line.operand;
+                string opCode=ss.str();
+                if(TR[textRecordIndex].isValidRecord(opCode.size()))
+                        TR[textRecordIndex].appendOpcode(opCode);
+                else
+                {
+                    textRecordIndex++;
+                    //Calculate Record Length
+                }
+            }
+            else if(line.opCode=="BYTE")
+            {
+                cout<<"\nBYTE : "+line.operand;
+                //Fix Ascii to opcode
+                stringstream ss;
+                if(line.operand[0]=='C')
+                {
+                    for(int i=2;i<line.operand.size()-1;i++)
+                    {
+                        ss<<hex<<(int)line.operand[i];
+                    }
+                }
+                else if(line.operand[0]=='X')
+                {
+                    ss<<line.operand.substr(2,line.operand.size());
+                }
+                string opCode=ss.str();
+                if(TR[textRecordIndex].isValidRecord(opCode.size()))
+                        TR[textRecordIndex].appendOpcode(opCode);
+                else
+                {
+                    textRecordIndex++;
+                    //Calculate Record Length
+                }
+            }
+            else if(line.opCode=="RESW")
+            {
+
+            }
+            else if(line.opCode=="RESB")
+            {
+                
+            }
         }
         
         line=readLine_symTab(intermediate);
     }
     output<<TR[0].s<<endl;
+    output<<TR[1].s<<endl;
 
 
 
