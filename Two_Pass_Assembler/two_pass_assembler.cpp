@@ -25,16 +25,17 @@ class TextRecord
 {
     public:
      string s;
+     int start,end; //Addresses
 
     TextRecord()
     {
         s="T^      ^  ";
     }
 
-    void addStartAndRecordLength(int start,int end)
+    void addStartAndRecordLength()
     {
         stringstream ss;
-        ss<<hex<<end-start+1;
+        ss<<setw(2)<<setfill('0')<<hex<<end-start+1;
         string addr=ss.str();
         s.replace(9,2,addr);
 
@@ -241,7 +242,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     
     ofstream symtabFile("SYMTAB");
     for(auto it:symtab)
-        symtabFile<<it.first<<" "<<it.second<<endl;
+        symtabFile<<it.first<<" "<<it.second<<" "<<hex<<stoi(it.second)<<endl;
     
     symtabFile.close();
     file.close();
@@ -289,12 +290,33 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
     }
 
     TextRecord TR[10];
-    int textRecordIndex=0;
+    int textRecordIndex=0;  //Index of a Text Record..Increases whenever needed
+    int start=0,finish=0;   //Update When Each Record Starts and Ends
+    int next_record_start_flag=1;
     while(line.opCode!="END")
     {
-        cout<<"\nRecird Index: "<<textRecordIndex<<"\n";
-        if(line.label!=".")
+        if(next_record_start_flag)
         {
+            stringstream ss;
+            ss<<line.loc;
+
+            ss>>hex>>finish;        //Get's finish of textRecordIndex-1 
+            
+            if(textRecordIndex>0)
+                TR[textRecordIndex-1].start=start,TR[textRecordIndex-1].end=finish;
+
+
+            if(textRecordIndex>0)
+                TR[textRecordIndex-1].addStartAndRecordLength();
+
+            start=finish;
+            locCtr=finish;
+            next_record_start_flag=0;
+        }
+
+        cout<<"\nRecord Index: "<<textRecordIndex<<"\n"<<"Rec Size: "<<TR[textRecordIndex].s.size()<<"\n";
+        if(line.label!=".")
+        {   
             if(opTab.count(line.opCode))
             {
                 if(line.operand.compare(""))
@@ -303,6 +325,7 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                     if(found!=string::npos)
                     {
                         //Indexed
+                        //1010->9010
                         string hexAddr=convert_to_hex_string(stoi(symTab[line.operand.substr(0,found)]));
                         char firstBit=hexAddr[0];
                         bitset<4> b(firstBit-'0');
@@ -317,7 +340,9 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                         else
                         {
                             textRecordIndex++;
-                            //Calculate Record Length
+                            TR[textRecordIndex].appendOpcode(opCode);
+                            //Start Next Record Flag--> To set Start And Finish
+                            next_record_start_flag=1;
                         }
                     }
                     else
@@ -330,7 +355,11 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                         else
                         {
                             textRecordIndex++;
+                            TR[textRecordIndex].appendOpcode(opCode);
                             //Calculate Record Length
+
+                            //Start Next Record Flag--> To set Start And Finish
+                            next_record_start_flag=1;
                         }
                     }
                 }
@@ -343,7 +372,12 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                     else
                     {
                         textRecordIndex++;
+                        TR[textRecordIndex].appendOpcode(ss.str());
+
                         //Calculate Record Length
+                        //Converting 1019->4121 (hex string to dec)
+                        //Start Next Record Flag--> To set Start And Finish
+                        next_record_start_flag=1;
                     }
                 }
             }
@@ -357,7 +391,12 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                 else
                 {
                     textRecordIndex++;
+                    TR[textRecordIndex].appendOpcode(opCode);
+
                     //Calculate Record Length
+                    //Converting 1019->4121 (hex string to dec)
+                    //Start Next Record Flag--> To set Start And Finish
+                    next_record_start_flag=1;
                 }
             }
             else if(line.opCode=="BYTE")
@@ -365,24 +404,31 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                 cout<<"\nBYTE : "+line.operand;
                 //Fix Ascii to opcode
                 stringstream ss;
+                string opCode="";
                 if(line.operand[0]=='C')
                 {
                     for(int i=2;i<line.operand.size()-1;i++)
                     {
                         ss<<hex<<(int)line.operand[i];
                     }
+                    opCode=ss.str();
                 }
                 else if(line.operand[0]=='X')
                 {
-                    ss<<line.operand.substr(2,line.operand.size());
+                    ss<<line.operand.substr(2,2);
+                    opCode=ss.str();
                 }
-                string opCode=ss.str();
+
                 if(TR[textRecordIndex].isValidRecord(opCode.size()))
                         TR[textRecordIndex].appendOpcode(opCode);
                 else
                 {
                     textRecordIndex++;
+                    TR[textRecordIndex].appendOpcode(opCode);
                     //Calculate Record Length
+                    //Converting 1019->4121 (hex string to dec)
+                    //Start Next Record Flag--> To set Start And Finish
+                    next_record_start_flag=1;
                 }
             }
             else if(line.opCode=="RESW")
@@ -394,11 +440,17 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                 
             }
         }
-        
+        stringstream ss;
+        ss<<line.loc;
+        ss>>hex>>locCtr;
         line=readLine_symTab(intermediate);
     }
-    output<<TR[0].s<<endl;
-    output<<TR[1].s<<endl;
+
+    TR[textRecordIndex].start=start,TR[textRecordIndex].end=locCtr;
+    TR[textRecordIndex].addStartAndRecordLength();
+    for(int i=0;i<textRecordIndex+1;i++)
+        output<<TR[i].s<<endl;
+    output<<"E^"<<setw(6)<<setfill('0')<<hex<<TR[0].start;
 
 
 
