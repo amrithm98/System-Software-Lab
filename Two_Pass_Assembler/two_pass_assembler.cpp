@@ -35,7 +35,7 @@ class TextRecord
     void addStartAndRecordLength()
     {
         stringstream ss;
-        ss<<setw(2)<<setfill('0')<<hex<<end-start+1;
+        ss<<setw(2)<<setfill('0')<<hex<<end-start;
         string addr=ss.str();
         s.replace(9,2,addr);
 
