@@ -9,6 +9,22 @@
 #include <bitset>
 using namespace std;
 
+/********
+ * This Program is Created By Amrith M (S5 CSE)
+ * 1. Program uses string streams for frequent hex->dec->string conversions
+ * 2. first_pass function returns a symtab map and writes to an intermediate file
+ * 3. second_pass function writes to output
+ * 4. both first_pass and second_pass is the implementation of the exact SIC algorithm
+ * 5. implementation of certain operations(substring manipulation etc might seem odd)
+ * 6  There are two classes Line and TextRecord which are for handling multiple objects of same kind
+ * 7. This is not an efficient Implementation. There exist some code redundancy.
+ * 8. setw(),setfill() etc are used for maintaning the size of each block
+ * 9. Supports Indexed Addressing as well
+ * 
+ *********/
+
+/*To read a Line from File... Compatible for source and Intermediate files*/
+
 class Line  
 {
     public:
@@ -21,28 +37,50 @@ class Line
             loc=d;
         }
 };
+
+/*To Create and Mange a Tex Record. There may be many. Length of record and all should be found*/
+
 class TextRecord
 {
     public:
+    
+    /*Content of Text Record*/
+
      string s;
-     int start,end; //Addresses
+
+    /*Start,End Address in Intermediate File Corresponding to each Text Record*/
+
+     int start,end;
 
     TextRecord()
     {
+        /*Leaving space for start Addr and Record Sizes*/
+
         s="T^      ^  ";
     }
 
+    /*For adding start address and record length at right places when a TR is complete*/
+    
     void addStartAndRecordLength()
     {
+
         stringstream ss;
+        
+        /*Replace with Record Length
+        start and end are decimal addresses*/
+        
         ss<<setw(2)<<setfill('0')<<hex<<end-start;
         string addr=ss.str();
         s.replace(9,2,addr);
+
+        /*Replace with Starting Address*/
 
         stringstream temp;
         temp<<setw(6)<<setfill('0')<<hex<<start;
         s.replace(2,6,temp.str());
     }
+
+    /*Checks if an OpCode can be appended*/
 
     bool isValidRecord(int next_opcode_length)
     {
@@ -52,13 +90,17 @@ class TextRecord
             return 0;
     }
 
+    /*Append an OpCode*/
+
     void appendOpcode(string opCode)
     {
         s+=("^"+opCode);
     }
 };
 
-Line readLine(istream &file)    //Reading Each Line of Input.. Max 3 Items
+/*Reading Each Line of Input.. Max 3 Items*/
+
+Line readLine(istream &file)    
 {
     string line="",label,opCode,operand;
 
@@ -77,7 +119,9 @@ Line readLine(istream &file)    //Reading Each Line of Input.. Max 3 Items
     return Line(label,opCode,operand,"");
 }
 
-Line readLine_symTab(istream &file) //Reading Each Line of Intermediate File
+/*Reading Each Line of Intermediate File*/
+
+Line readLine_symTab(istream &file)
 {
     string line="",label,opCode,operand,loc;
 
@@ -96,6 +140,8 @@ Line readLine_symTab(istream &file) //Reading Each Line of Intermediate File
     return Line(label,opCode,operand,loc);
 }
 
+/*Converting decimal to hexadecimal string as it can't be stored anywhere as hexadecimal*/
+
 string convert_to_hex_string(int addr)
 {
     stringstream ss;
@@ -103,6 +149,7 @@ string convert_to_hex_string(int addr)
     return ss.str();
 }
 
+/* opTab is a map */
 void init_optab(map<string,string> &map)
 {
     map["ADD"]="18";
@@ -135,7 +182,6 @@ void init_optab(map<string,string> &map)
 
 map<string,string> first_pass(string fileName,map<string,string> optab)
 {
-    string assembler_directives[]={"BYTE","WORD","RESB","RESW"};
 
     ifstream file(fileName);    //Reading Input File
 
@@ -148,6 +194,7 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
     string programName;
 
     /*First Line of Program Contains a START Command Followed By Starting Address*/
+
     Line line=readLine(file);
 
     if(line.opCode=="START")
@@ -159,6 +206,9 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
 
         startAddress=locCtr;
         programName=line.label;
+
+        /* Write First Line to intermediate File */
+
         intermediateFile<<temp.str()<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
     }
     else
@@ -214,8 +264,8 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
             }
             else if(line.opCode=="BYTE")
             {
-                int inc=line.operand.size()-3;  //Remove C,X or whatever and the two apostrophies = remove 3 characters
-                // cout<<"\nByte"<<inc<<"\n";
+                /* Remove C,X or whatever and the two apostrophies = remove 3 characters */
+                int inc=line.operand.size()-3;  
                 if(line.operand[0]=='X')
                     inc/=2;
                 locCtr+=inc;
@@ -226,9 +276,12 @@ map<string,string> first_pass(string fileName,map<string,string> optab)
                 exit(0);
             }
         }
+
+        //Read the next Line
         line=readLine(file);
     }
 
+    //Write the last Line (END)
 
     intermediateFile<<hex<<locCtr<<" "<<line.label<<" "<<line.opCode<<" "<<line.operand<<"\n";
 
@@ -284,10 +337,13 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
         string headerRecord="H^"+progName.str()+"^"+loc.str()+"^";
         progSize<<setw(6)<<setfill('0')<<hex<<programSize;
 
+        /* Writes header record */
+
         output<<headerRecord<<progSize.str()<<"\n";
 
         line=readLine_symTab(intermediate);
     }
+    /* 10 TextRecord objects and variables to store addresses */
 
     TextRecord TR[10];
     int textRecordIndex=0;  //Index of a Text Record..Increases whenever needed
@@ -295,6 +351,11 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
     int next_record_start_flag=1;
     while(line.opCode!="END")
     {
+        /**
+         * When A Record reaches maximum size,Opcode is inserted to new record and this flag is set
+         * When next_record_start_flag is set, the address and size of previous record is set.
+         * Here we convert Hex String to decimal
+         * */
         if(next_record_start_flag)
         {
             stringstream ss;
@@ -305,22 +366,29 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
             if(textRecordIndex>0)
                 TR[textRecordIndex-1].start=start,TR[textRecordIndex-1].end=finish;
 
-
             if(textRecordIndex>0)
                 TR[textRecordIndex-1].addStartAndRecordLength();
 
             start=finish;
             locCtr=finish;
             next_record_start_flag=0;
+        
         }
 
         cout<<"\nRecord Index: "<<textRecordIndex<<"\n"<<"Rec Size: "<<TR[textRecordIndex].s.size()<<"\n";
+
+        /* If this is not a comment Line */
+
         if(line.label!=".")
         {   
+            /* If there exists an opCode . Excludes Directives */
             if(opTab.count(line.opCode))
             {
+                /* If the operand is not empty */
+                
                 if(line.operand.compare(""))
                 {
+                    /* Checking if INDEX MODE is used */
                     size_t found = line.operand.find(',');
                     if(found!=string::npos)
                     {
@@ -328,6 +396,9 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                         //1010->9010
                         string hexAddr=convert_to_hex_string(stoi(symTab[line.operand.substr(0,found)]));
                         char firstBit=hexAddr[0];
+
+                        /* Uses Bitset to Manipulate MSB bit */
+                        /* firstbit will be char '1' or '2' or '0' etc... */
                         bitset<4> b(firstBit-'0');
                         b[3]=1;
                         stringstream ss;
@@ -345,24 +416,28 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                             next_record_start_flag=1;
                         }
                     }
+                    /* Not INDEXED MODE*/
                     else
                     {
                         string opCode="";
                         opCode+=(opTab[line.opCode]+convert_to_hex_string(stoi(symTab[line.operand])));
                         cout<<opCode<<"\n";
+
+                        /*Checking if an opCode can be inserted,
+                        if not sets the flag and starts with new record*/
+
                         if(TR[textRecordIndex].isValidRecord(opCode.size()))
                             TR[textRecordIndex].appendOpcode(opCode);
                         else
                         {
-                            textRecordIndex++;
+                            textRecordIndex++;  //Starts new record
                             TR[textRecordIndex].appendOpcode(opCode);
-                            //Calculate Record Length
-
                             //Start Next Record Flag--> To set Start And Finish
                             next_record_start_flag=1;
                         }
                     }
                 }
+                /*if Operand is Empty, Pad with Zeros */
                 else
                 {
                     stringstream ss;
@@ -392,17 +467,12 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                 {
                     textRecordIndex++;
                     TR[textRecordIndex].appendOpcode(opCode);
-
-                    //Calculate Record Length
-                    //Converting 1019->4121 (hex string to dec)
-                    //Start Next Record Flag--> To set Start And Finish
                     next_record_start_flag=1;
                 }
             }
             else if(line.opCode=="BYTE")
             {
                 cout<<"\nBYTE : "+line.operand;
-                //Fix Ascii to opcode
                 stringstream ss;
                 string opCode="";
                 if(line.operand[0]=='C')
@@ -425,34 +495,42 @@ void second_pass(map<string,string> opTab,map<string,string> symTab,string fileN
                 {
                     textRecordIndex++;
                     TR[textRecordIndex].appendOpcode(opCode);
-                    //Calculate Record Length
-                    //Converting 1019->4121 (hex string to dec)
-                    //Start Next Record Flag--> To set Start And Finish
                     next_record_start_flag=1;
                 }
             }
-            else if(line.opCode=="RESW")
+            else if(line.opCode=="RESW" || line.opCode=="RESB")
             {
-
-            }
-            else if(line.opCode=="RESB")
-            {
-                
+                int inc;
+                stringstream ss;
+                ss<<hex<<line.operand;
+                ss>>inc;
+                if(line.opCode=="RESW")
+                    inc*=3;
+                locCtr+=inc;
             }
         }
+        /* Keeps Track of the last location */
         stringstream ss;
         ss<<line.loc;
         ss>>hex>>locCtr;
         line=readLine_symTab(intermediate);
     }
 
+    /* Set start and size of last used text record */
+
     TR[textRecordIndex].start=start,TR[textRecordIndex].end=locCtr;
     TR[textRecordIndex].addStartAndRecordLength();
+
+    /*Write TextRecords to File*/
+
     for(int i=0;i<textRecordIndex+1;i++)
         output<<TR[i].s<<endl;
+    
+    /*Write End Record*/
+
     output<<"E^"<<setw(6)<<setfill('0')<<hex<<TR[0].start;
 
-
+    cout<<"\nSUCCESSFULLY ASSEMBLED THE PROGRAM!!";
 
 }
 
