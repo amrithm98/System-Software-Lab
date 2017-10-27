@@ -55,6 +55,17 @@ class TextRecord
         size = 0;
     }
 
+    TextRecord(int locctr)
+    {
+        /*Leaving space for start Addr and Record Sizes*/
+        stringstream ss;
+        ss<<setw(6)<<setfill('0')<<hex<<locctr;
+        ss>>start;
+        
+        s="T^"+ss.str()+"^  ";
+        size = 0;
+    }
+
     /*For adding start address and record length at right places when a TR is complete*/
     
     void addStartAndRecordLength()
@@ -88,9 +99,18 @@ class TextRecord
 
     /*Append an OpCode*/
 
-    void appendOpcode(string opCode)
+    void appendOpcode(string opCode,int len)
     {
         s+=("^"+opCode);
+        size += len;
+    }
+
+    string finalTR()
+    {
+        stringstream ss;
+        ss<<setw(2)<<setfill('0')<<hex<<size;
+        s.replace(9,2,ss.str());
+        return s;
     }
 };
 
@@ -167,6 +187,59 @@ void init_optab(map<string,string> &map)
 vector<SymTab> symtab;
 vector<TextRecord> textRecords;
 
+int insertIntoSymtab(string label,int locctr,TextRecord &currentTR)
+{
+    for(int i = 0; i < symtab.size(); i++)
+    {
+        if(symtab[i].label == label)
+        {
+            if(symtab[i].addr == -1)
+            {
+                symtab[i].addr = locctr;
+
+                if(currentTR.size > 0)
+                {
+                    textRecords.push_back(currentTR);
+                    currentTR = *new TextRecord();
+                }
+
+                stringstream ss;
+                ss<<setw(4)<<setfill('0')<<hex<<locctr;
+
+                for(auto it: symtab[i].forward_references)
+                {
+                    TextRecord fwd = *new TextRecord(it);
+                    fwd.appendOpcode(ss.str(),2);
+                    textRecords.push_back(fwd);
+                }
+            }
+            else
+            {
+                cout<<"\nError: Variable Reused --> "<<label<<endl;
+                return 0;
+            }
+        }
+    }
+    symtab.push_back(*new SymTab(label,locctr));
+    return 1;
+    
+}
+
+int insertForwardReference(string label,int locctr)
+{
+    for(int i = 0; i < symtab.size(); i++)
+    {
+        if(symtab[i].label == label)
+        {
+            symtab[i].forward_references.push_back(locctr);
+            return 1;
+        }
+    }
+    vector<int> fwd;
+    fwd.push_back(locctr);
+    symtab.push_back(*new SymTab(label,fwd));
+    return 1;
+}
 
 int getOperandValue(string label)
 {
@@ -187,7 +260,7 @@ void assembleProgram(string fileName,map<string,string> opTab)
 
     int startAddress;
 
-    string programName;
+    string programName,headerRecord;
 
     Line line=readLine(file);
 
@@ -196,7 +269,7 @@ void assembleProgram(string fileName,map<string,string> opTab)
         stringstream temp,loc,progName;
         
         temp<<setw(4)<<setfill('0')<<hex<<line.operand;
-        temp>>locCtr;
+        temp>>locCtr;   
 
         startAddress=locCtr;
         programName=line.label;
@@ -204,9 +277,7 @@ void assembleProgram(string fileName,map<string,string> opTab)
         loc<<setw(6)<<setfill('0')<<hex<<line.loc;
         progName<<setw(6)<<setfill(' ')<<line.label;
 
-        string headerRecord="H^"+progName.str()+"^"+loc.str()+"^";
-        output<<headerRecord;
-
+        headerRecord="H^"+progName.str()+"^"+loc.str()+"^";
     }
     else
     {
@@ -229,7 +300,8 @@ void assembleProgram(string fileName,map<string,string> opTab)
 
             if(line.label != "")
             {
-                // insertIntoSymtab(line.label,locCtr,currentTR);
+                cout<<"\nInsert symtab: "<<line.label<<endl;
+                insertIntoSymtab(line.label,locCtr,currentTR);
             }
 
             if(opTab.find(line.opCode)!=opTab.end())
@@ -239,9 +311,12 @@ void assembleProgram(string fileName,map<string,string> opTab)
                 if(line.operand != "")
                 {
                     int sym_addr = getOperandValue(line.label);
+                    cout<<"\nLabel and sym_addr"<<line.label<<" "<<sym_addr<<endl;
                     if(sym_addr == -1)
                     {
                         //Create fwd ref
+                        insertForwardReference(line.operand,locCtr+1);
+                        cout<<"\nForward Reference: "<<line.label<<endl;
                         //add 0000 to TR
                         record += "0000";
                     }
@@ -311,15 +386,15 @@ void assembleProgram(string fileName,map<string,string> opTab)
             }
             else
             {
-                if(currentTR.isValidRecord(record.length()))
+                if(currentTR.isValidRecord(entry_length))
                 {
-                    currentTR.appendOpcode(record);
+                    currentTR.appendOpcode(record,entry_length);
                 }
                 else
                 {
                     textRecords.push_back(currentTR);
                     currentTR = *new TextRecord();
-                    currentTR.appendOpcode(record);
+                    currentTR.appendOpcode(record,entry_length);
                 }
             }
         }
@@ -328,17 +403,34 @@ void assembleProgram(string fileName,map<string,string> opTab)
     textRecords.push_back(currentTR);
 
     for(int i = 0; i < textRecords.size(); i++)
-        cout<<textRecords[i].s<<endl;
+    {
+        if(textRecords[i].size>0)
+            cout<<textRecords[i].finalTR()<<endl;
+    }
 
-    
+    stringstream ss;
+    ss<<hex<<locCtr-startAddress+1;
+    headerRecord+=ss.str();
+
+    cout<<headerRecord<<endl;
+    stringstream es;
+    es<<hex<<startAddress;
+    string endRecord="E^"+es.str();
+
+    output<<headerRecord<<endl;
+    for(int i = 0; i < textRecords.size(); i++)
+    {
+        if(textRecords[i].size>0)
+            output<<textRecords[i].finalTR()<<endl;
+    }
+    output<<endRecord;
 }
 
 int main()
-{
+{   
     string fileName;
 
     map<string,string> opTab;
-    map<string,string> symTab;
 
     init_optab(opTab);
 
