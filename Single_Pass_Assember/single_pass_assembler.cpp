@@ -267,17 +267,15 @@ void assembleProgram(string fileName,map<string,string> opTab)
     if(line.opCode=="START")
     {
         stringstream temp,loc,progName;
-        
         temp<<setw(4)<<setfill('0')<<hex<<line.operand;
         temp>>locCtr;   
-
         startAddress=locCtr;
         programName=line.label;
 
         loc<<setw(6)<<setfill('0')<<hex<<line.loc;
         progName<<setw(6)<<setfill(' ')<<line.label;
 
-        headerRecord="H^"+progName.str()+"^"+loc.str()+"^";
+        headerRecord="H^"+progName.str()+"^"+temp.str()+"^";
     }
     else
     {
