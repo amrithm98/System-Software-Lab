@@ -18,15 +18,21 @@ void generate_address(string fileName)
         getline(objectProg,line);
         while(line[0]!='E')
         {
+            // cout<<line<<endl;
             if(line[0] == 'H')
             {   
                 progName = line.substr(2,6);
                 startAddress = line.substr(9,6);
-                size = line.substr(16,6);
+                size = line.substr(16);
                 //Remove trailing 0s
                 progName.erase(0, progName.find_first_not_of('0'));
                 startAddress.erase(0, startAddress.find_first_not_of('0'));
                 size.erase(0, size.find_first_not_of('0'));
+
+                cout<<"\nProgram Name: "<<progName<<endl;
+                cout<<"\nProgram size: "<<size<<endl;
+                cout<<"\nProgram Start: "<<startAddress<<endl;
+
                 //Store starting address
                 startAddr = stoi(startAddress);
             }
@@ -46,6 +52,8 @@ void generate_address(string fileName)
                         s = "";
                     }
                 }
+                if(s!="")
+                    address.push_back(s);
             }
             getline(objectProg,line);
         }
@@ -61,9 +69,9 @@ void generate_address(string fileName)
     {
         int curr_length = it.size();
 
-        if(loaded_prog[curr_addr].size() + curr_length > 40)
+        if(loaded_prog[curr_addr].size() + curr_length > 32)
         {
-            int reqd_length_of_opCode = 40 - loaded_prog[curr_addr].size();
+            int reqd_length_of_opCode = 32 - loaded_prog[curr_addr].size();
             loaded_prog[curr_addr] += (it.substr(0,reqd_length_of_opCode));
             curr_addr += 10;
             loaded_prog[curr_addr] = it.substr(reqd_length_of_opCode);
@@ -73,6 +81,7 @@ void generate_address(string fileName)
             loaded_prog[curr_addr] += (it);
         }
     }
+    
     cout<<"\nLoaded Addresses: \n===================="<<endl;
     for(auto it:loaded_prog)
     {
