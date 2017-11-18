@@ -20,4 +20,7 @@
   <li><b>============</b></li>
   <li>Pass One of a Two-Pass Assembler</li>
   <li>Pass Two of a Two-Pass Assembler</li>
+  <li>Single Pass SIC Assembler</li>
+  <li>Absolute Loader</li>
+  <li>HashMap Implementation of Assembler</li>
 </ul>
