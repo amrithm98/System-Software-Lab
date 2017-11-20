@@ -29,6 +29,8 @@ void generate_address(string fileName)
                 startAddress.erase(0, startAddress.find_first_not_of('0'));
                 size.erase(0, size.find_first_not_of('0'));
 
+                cout<<"\nABSOLUTE LOADER";
+                cout<<"\n====================";
                 cout<<"\nProgram Name: "<<progName<<endl;
                 cout<<"\nProgram size: "<<size<<endl;
                 cout<<"\nProgram Start: "<<startAddress<<endl;
